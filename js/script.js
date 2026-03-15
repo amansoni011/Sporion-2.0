@@ -328,7 +328,15 @@ document.addEventListener("keydown", (e) => {
 // 10. FORM VALIDATION
 // ==========================================
 const contactForm = document.getElementById("contactForm");
-const formInputs = contactForm.querySelectorAll("input, textarea");
+const formInputs = contactForm
+  ? contactForm.querySelectorAll("input, textarea")
+  : [];
+const contactRecipientEmail = contactForm
+  ? contactForm.dataset.recipientEmail?.trim()
+  : "";
+const contactFormEndpoint = contactRecipientEmail
+  ? `https://formsubmit.co/ajax/${encodeURIComponent(contactRecipientEmail)}`
+  : "";
 
 // Email validation regex
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -388,11 +396,15 @@ function validateField(field) {
 
     if (error) {
       formGroup.classList.add("error");
-      errorMessage.textContent = error;
+      if (errorMessage) {
+        errorMessage.textContent = error;
+      }
       return false;
     } else {
       formGroup.classList.remove("error");
-      errorMessage.textContent = "";
+      if (errorMessage) {
+        errorMessage.textContent = "";
+      }
       return true;
     }
   }
@@ -401,36 +413,155 @@ function validateField(field) {
 }
 
 // Form submission
-contactForm.addEventListener("submit", (e) => {
-  e.preventDefault();
+if (contactForm) {
+  contactForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  let isValid = true;
+    let isValid = true;
 
-  // Validate all fields
-  formInputs.forEach((input) => {
-    if (!validateField(input)) {
-      isValid = false;
+    // Validate all fields
+    formInputs.forEach((input) => {
+      if (!validateField(input)) {
+        isValid = false;
+      }
+    });
+
+    if (!isValid) {
+      showNotification("Please fix the errors in the form.", "error");
+      return;
+    }
+
+    if (!contactFormEndpoint) {
+      showNotification(
+        "Set data-recipient-email on the contact form to receive messages.",
+        "error",
+      );
+      return;
+    }
+
+    const submitButton = contactForm.querySelector(".submit-btn");
+    const submitButtonText = submitButton
+      ? submitButton.querySelector("span")
+      : null;
+    const originalButtonText = submitButtonText
+      ? submitButtonText.textContent
+      : "Send Message";
+
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+    if (submitButtonText) {
+      submitButtonText.textContent = "Sending...";
+    }
+
+    try {
+      const formData = new FormData(contactForm);
+      const senderName =
+        formData.get("name")?.toString().trim() || "Website Visitor";
+      const senderEmail = formData.get("email")?.toString().trim() || "";
+      const submittedSubject =
+        formData.get("subject")?.toString().trim() || "Contact Form Inquiry";
+      const submittedMessage = formData.get("message")?.toString().trim() || "";
+
+      const formattedMessage = [
+        "New Contact Form Submission",
+        "",
+        `Name: ${senderName}`,
+        `Email ID: ${senderEmail}`,
+        `Subject: ${submittedSubject}`,
+        "",
+        "Message:",
+        submittedMessage,
+      ].join("\n");
+
+      formData.set("message", formattedMessage);
+      formData.set("_replyto", senderEmail);
+      formData.set("_subject", `Contact Form: ${submittedSubject}`);
+      formData.set("_template", "box");
+      formData.set("_captcha", "false");
+
+      const response = await fetch(contactFormEndpoint, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+        },
+        body: formData,
+      });
+
+      let responseData = {};
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("application/json")) {
+        try {
+          responseData = await response.json();
+        } catch (error) {
+          responseData = {};
+        }
+      }
+
+      const requestSucceeded =
+        response.ok &&
+        responseData.success !== false &&
+        responseData.success !== "false";
+
+      if (!requestSucceeded) {
+        throw new Error(
+          responseData.message ||
+            "Unable to send message. Please confirm FormSubmit activation.",
+        );
+      }
+
+      showNotification(
+        "Message sent successfully! We will get back to you soon.",
+        "success",
+      );
+
+      // Reset form
+      contactForm.reset();
+
+      // Remove any error classes/messages
+      formInputs.forEach((input) => {
+        input.parentElement.classList.remove("error");
+        const errorMessage =
+          input.parentElement.querySelector(".error-message");
+        if (errorMessage) {
+          errorMessage.textContent = "";
+        }
+      });
+    } catch (error) {
+      console.error("Contact form send failed:", error);
+      const errorMessage =
+        error && typeof error.message === "string"
+          ? error.message.toLowerCase()
+          : "";
+
+      if (/activate|confirm|verification/.test(errorMessage)) {
+        showNotification(
+          "Please check your inbox and activate FormSubmit for this email first.",
+          "error",
+        );
+      } else if (
+        /failed to fetch|networkerror|network request/.test(errorMessage)
+      ) {
+        showNotification(
+          "Network blocked the request. Run the site with Live Server and check internet.",
+          "error",
+        );
+      } else {
+        showNotification(
+          "We could not send your message right now. Please try again shortly.",
+          "error",
+        );
+      }
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+      if (submitButtonText) {
+        submitButtonText.textContent = originalButtonText;
+      }
     }
   });
-
-  if (isValid) {
-    // Show success message
-    showNotification(
-      "Message sent successfully! We will get back to you soon.",
-      "success",
-    );
-
-    // Reset form
-    contactForm.reset();
-
-    // Remove any error classes
-    formInputs.forEach((input) => {
-      input.parentElement.classList.remove("error");
-    });
-  } else {
-    showNotification("Please fix the errors in the form.", "error");
-  }
-});
+}
 
 // Notification function
 function showNotification(message, type) {
@@ -813,7 +944,7 @@ if (roadmapItems.length > 0) {
         }
       });
     },
-    { threshold: 0.25 }
+    { threshold: 0.25 },
   );
 
   roadmapItems.forEach((item, index) => {

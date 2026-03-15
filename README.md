@@ -140,6 +140,17 @@ Sporian2026/
    - Right-click on `index.html`
    - Select "Open with Live Server"
 
+## 📧 Contact Form Email Setup
+
+The contact form now sends submissions to an email address using FormSubmit.
+
+1. Open `index.html`.
+2. Find the contact form element with `id="contactForm"`.
+3. Update the `data-recipient-email` value to your email address.
+4. Submit the form once and confirm the activation email from FormSubmit.
+
+After activation, all valid contact form submissions will be delivered to the configured inbox.
+
 ## 📱 Responsive Breakpoints
 
 - **Desktop**: 1200px and above
