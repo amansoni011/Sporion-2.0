@@ -314,8 +314,6 @@ body {
 /* Hero Section */
 .hero {
     height: 100vh;
-    background: linear-gradient(rgba(30, 58, 138, 0.7), rgba(59, 130, 246, 0.7)),
-                url('https://images.unsplash.com/photo-1562774053-701939374585?w=1920&h=1080&fit=crop') center/cover;
     position: relative;
     display: flex;
     align-items: center;
@@ -323,15 +321,40 @@ body {
     text-align: center;
     color: var(--white);
     overflow: hidden;
+    background: #0f172a;
+}
+
+.hero-bg-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+    background: #1e293b;
+}
+
+body.dark-mode .hero-bg-image {
+    filter: brightness(1.15) saturate(0.92);
+}
+.hero .hero-bg-image{
+    position: absolute;
 }
 
 .hero-overlay {
-    position: absolute;
+    position: relative;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.3);
+    /* background: rgba(0, 0, 0, 0.55); */
+    z-index: 1;
+     transition: var(--transition);
+}
+
+body.dark-mode .hero-overlay {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .hero-content {
@@ -343,9 +366,17 @@ body {
 .hero-title {
     font-size: 4rem;
     font-weight: 800;
-    margin-bottom: 20px;
+    /* margin-bottom: 10px; */
     text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
     animation: slideInDown 0.8s ease;
+    margin-top: 90px !important;
+    line-height: 1.2;
+}
+
+body.dark-mode .hero-title,
+body.dark-mode .hero-subtitle {
+    color: #000000;
+    text-shadow: none;
 }
 
 .hero-subtitle {
@@ -1298,9 +1329,9 @@ body.dark-mode .footer {
     color: var(--white);
 }
 
-.footer-logo i {
-    font-size: 1.5rem;
-    color: var(--accent-color);
+.footer-logo img {
+    width: 100px;
+    height: 100px;
 }
 
 .footer-section ul {
@@ -1723,7 +1754,7 @@ SPORTS ROADMAP
     .hero-title {
         font-size: 3rem;
     }
-    
+   
     .section-title {
         font-size: 2.5rem;
     }
@@ -1861,6 +1892,12 @@ SPORTS ROADMAP
 @media (max-width: 480px) {
     .hero-title {
         font-size: 2rem;
+    }
+     .hero-content{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
     }
     
     .section-title {
